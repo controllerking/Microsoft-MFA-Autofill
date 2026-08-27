@@ -1,6 +1,6 @@
-# Microsoft MFA TOTP Autofill
+# Microsoft MFA TOTP Autofill (Chrome)
 
-A Firefox extension that helps you sign in to Microsoft accounts faster by:
+A Chrome extension that helps you sign in to Microsoft accounts faster by:
 
 1. Watching for the Microsoft sign-in email field and remembering which
    account you're signing into (in-tab only, via `sessionStorage`).
@@ -14,37 +14,24 @@ A Firefox extension that helps you sign in to Microsoft accounts faster by:
    network calls) for the matching account and autofilling it into the code
    field.
 
-Password-manager detection uses two signals: Firefox's native `:autofill`
-pseudo-class (instant, for the built-in password manager) and, as a fallback
-for extension-based managers that fill via script, a "value stopped changing
-for 500ms" heuristic — which also keeps it from submitting while you're still
-typing manually. Toggle this off in settings if you'd rather press Next
-yourself.
+Password-manager detection uses a "value stopped changing for 500ms"
+heuristic — which also keeps it from submitting while you're still typing
+manually. Toggle this off in settings if you'd rather press Next yourself.
 
 This only works for accounts where **you** have added the TOTP secret in the
 extension's options page — i.e. the same kind of secret you'd otherwise put
 into an authenticator app. It does not intercept, phish, or bypass anyone
 else's MFA.
 
-## Install (temporary / development)
+## Install
 
-1. Open `about:debugging#/runtime/this-firefox` in Firefox.
-2. Click **Load Temporary Add-on...**
-3. Select `manifest.json` in this folder.
+1. Open `chrome://extensions`.
+2. Enable **Developer mode** (top right).
+3. Click **Load unpacked** and select this folder.
 
-(Temporary add-ons are removed when Firefox restarts. For permanent use,
-you'd need to sign it via Mozilla's [Firefox Extension Workshop](https://extensionworkshop.com/)
-or use Firefox Developer Edition/Nightly with `xpinstall.signatures.required`
-disabled.)
-
-## Chrome version
-
-This folder (`firefox-extension/`) is the Firefox build. A Chrome (MV3)
-build lives in `../chrome-extension/`, generated from this folder plus the
-Chrome-only overlay in `../chrome-overlay/` — see
-[../chrome-overlay/README.md](../chrome-overlay/README.md) for how to build
-and load it, and run `../build-chrome.sh` after changing anything in here to
-regenerate it.
+(Chrome removes unpacked extensions if you delete this folder, and shows an
+"unsupported developer extension" banner on startup unless it's published to
+the Chrome Web Store — that's expected for a locally loaded extension.)
 
 ## Setup
 
@@ -69,19 +56,19 @@ regenerate it.
 ## How detection works
 
 The content script uses a mix of CSS selectors and case-insensitive text
-matching (configurable defaults in `content.js`/`background.js`) since
-Microsoft's login UI changes over time and across tenants. The text search
-walks into any open shadow DOM it finds (parts of Microsoft's newer sign-in
-UI use it), and re-checks the page once a second in addition to reacting to
-DOM changes, so it isn't solely dependent on `MutationObserver` picking up
-every update. It won't re-click the same link/tile twice within a few
-seconds, but will click it again after that if it's still there — this
-matters on multi-step flows (e.g. a passkey failure screen that offers
-"Sign in another way" again).
+matching since Microsoft's login UI changes over time and across tenants.
+The text search walks into any open shadow DOM it finds (parts of
+Microsoft's newer sign-in UI use it), and re-checks the page once a second
+in addition to reacting to DOM changes, so it isn't solely dependent on
+`MutationObserver` picking up every update. It won't re-click the same
+link/tile twice within a few seconds, but will click it again after that if
+it's still there — this matters on multi-step flows (e.g. a passkey failure
+screen that offers "Sign in another way" again).
 
 If Microsoft changes their markup and the extension stops finding a field or
-link, check the browser console (`about:devtools-toolbox`) for
-`[MS TOTP Autofill]` debug logs, and adjust the selectors/patterns.
+link, open `chrome://extensions`, click **service worker** / **inspect
+views** on this extension, and check the console for `[MS TOTP Autofill]`
+debug logs.
 
 ## Security model
 
@@ -90,9 +77,9 @@ link, check the browser console (`about:devtools-toolbox`) for
 - Secrets are encrypted with AES-256-GCM using a key derived from your
   passphrase via PBKDF2-SHA256 (210,000 iterations) with a random per-vault
   salt. The passphrase itself is never stored anywhere.
-- The derived key lives **only** in the background script's memory. It is
-  never written to disk, never sent to the popup or options page, and never
-  sent to the content script running on the Microsoft login page.
+- The derived key lives **only** in the background service worker's memory.
+  It is never written to disk, never sent to the popup or options page, and
+  never sent to the content script running on the Microsoft login page.
 - The content script (which runs in the context of a live web page — the
   least-trusted part of the extension) never has access to secrets or the
   passphrase at all. It sends the background script an email address and
@@ -110,7 +97,7 @@ link, check the browser console (`about:devtools-toolbox`) for
 **No-passphrase mode (explicit opt-out):**
 
 - If you choose "I don't want a passphrase," secrets are stored as plain
-  text in `browser.storage.local`, scoped to this extension. Anyone with
+  text in `chrome.storage.local`, scoped to this extension. Anyone with
   access to your OS user profile, or malware running as you, could read
   them. There's no lock/unlock step — it behaves like the encrypted mode
   minus the encryption, so it stays fully convenient.

@@ -1,0 +1,4 @@
+# Chrome extension signing key — grants the ability to publish updates
+# under this extension's ID if leaked. Never commit this.
+*.pem
+/keys/
