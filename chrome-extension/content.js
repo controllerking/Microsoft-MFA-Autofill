@@ -82,8 +82,23 @@ function setSessionEmail(email) {
 // malicious page in this tab can, at worst, request a code for whatever
 // email is on screen — it can never read the vault itself.
 async function loadSettings() {
-  const response = await browser.runtime.sendMessage({ type: "GET_SETTINGS" });
+  let response;
+  try {
+    response = await browser.runtime.sendMessage({ type: "GET_SETTINGS" });
+  } catch (err) {
+    if (isContextInvalidated(err)) throw err; // let tick() stop the polling loop
+    log("Failed to reach background script for settings:", err);
+  }
   return { ...DEFAULT_SETTINGS, ...((response && response.settings) || {}) };
+}
+
+// Reloading/updating the extension while this tab is still open severs this
+// content script's connection to it — every browser.runtime.* call then
+// throws this same error, forever, since the page is never told to stop.
+// Recognize it so tick()'s setInterval can tear itself down instead of
+// spamming the extension's error console once a second indefinitely.
+function isContextInvalidated(err) {
+  return !!err && /context invalidated/i.test(err.message || "");
 }
 
 function isVisible(el) {
@@ -423,6 +438,7 @@ async function tryFillOtc(settings) {
   try {
     response = await browser.runtime.sendMessage({ type: "GENERATE_CODE_FOR_EMAIL", email });
   } catch (err) {
+    if (isContextInvalidated(err)) throw err; // let tick() stop the polling loop
     log("Failed to reach background script:", err);
     return;
   }
@@ -478,7 +494,7 @@ async function tick() {
 let debounceHandle = null;
 function scheduleTick() {
   if (debounceHandle) clearTimeout(debounceHandle);
-  debounceHandle = setTimeout(tick, 250);
+  debounceHandle = setTimeout(runTick, 250);
 }
 
 const observer = new MutationObserver(scheduleTick);
@@ -488,7 +504,22 @@ observer.observe(document.documentElement, { childList: true, subtree: true });
 // so changes inside a shadow root (used by parts of Microsoft's newer
 // sign-in UI) can happen without ever triggering scheduleTick above. A
 // slow periodic poll is a cheap safety net against missing those.
-setInterval(tick, 1000);
+const pollHandle = setInterval(runTick, 1000);
+
+// Runs tick() and, if the extension was reloaded/updated out from under this
+// already-open tab, stops all further polling instead of retrying forever —
+// there's nothing this content script can do to reconnect; only a page
+// reload fixes it.
+async function runTick() {
+  try {
+    await tick();
+  } catch (err) {
+    if (!isContextInvalidated(err)) throw err;
+    log("Extension was reloaded — stopping autofill on this page. Reload the tab to resume.");
+    clearInterval(pollHandle);
+    observer.disconnect();
+  }
+}
 
 // Logged once per frame this script is injected into. If the credential
 // picker lives in a frame whose URL isn't covered by manifest.json's
@@ -496,4 +527,4 @@ setInterval(tick, 1000);
 // there's no other log to indicate the absence, so this is what proves it.
 log("Content script loaded. frame url:", location.href, "| is top frame:", window.top === window.self);
 
-tick();
+runTick();
