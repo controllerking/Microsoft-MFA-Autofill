@@ -14,10 +14,3 @@ Unzip one, then:
   reliable path for local installs.)
 
 Each zip includes its own README with setup steps and the security model.
-
-## Regenerating the .crx
-
-`ms-totp-autofill-chrome.crx` is signed with the private key in `../keys/`
-(gitignored — never commit it). To repack after a source change: Chrome's
-`chrome://extensions` -> **Pack extension** -> Extension root directory:
-`chrome-extension/`, Private key file: `keys/chrome-extension.pem`.
