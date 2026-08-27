@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Microsoft MFA TOTP Autofill",
   "version": "1.0.0",
-  "description": "Detects Microsoft sign-in, switches away from Authenticator push prompts when possible, and autofills a locally-generated TOTP code for the matching account.",
+  "description": "Detects Microsoft sign-in and autofills locally generated TOTP codes, reducing reliance on Authenticator push prompts.",
   "browser_specific_settings": {
     "gecko": {
       "id": "ms-totp-autofill@local.extension",
