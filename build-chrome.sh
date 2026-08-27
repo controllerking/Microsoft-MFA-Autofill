@@ -36,7 +36,7 @@ cp LICENSE PRIVACY.md "$OUT"/
 
 # popup.html and options.html call browser.runtime.* directly; give them the
 # shim before their own script runs.
-sed -i 's#<script src="popup.js"></script>#<script src="browser-polyfill.js"></script>\n    <script src="popup.js"></script>#' "$OUT"/popup.html
-sed -i 's#<script src="options.js"></script>#<script src="browser-polyfill.js"></script>\n      <script src="options.js"></script>#' "$OUT"/options.html
+perl -0pi -e 's#<script src="popup.js"></script>#<script src="browser-polyfill.js"></script>\n    <script src="popup.js"></script>#' "$OUT"/popup.html
+perl -0pi -e 's#<script src="options.js"></script>#<script src="browser-polyfill.js"></script>\n      <script src="options.js"></script>#' "$OUT"/options.html
 
 echo "Built $OUT/ — in Chrome, open chrome://extensions, enable Developer mode, and 'Load unpacked' that folder."
