@@ -20,10 +20,15 @@ cp firefox-extension/manifest.json firefox-extension/background.js \
    firefox-extension/popup.js firefox-extension/options.html \
    firefox-extension/options.js "$FF_STAGE"/
 cp -r firefox-extension/icons "$FF_STAGE"/
+cp LICENSE PRIVACY.md "$FF_STAGE"/
 # Drop the "Chrome version" section (it only makes sense pointing at sibling
-# dev folders, which don't exist once this is zipped standalone).
+# dev folders, which don't exist once this is zipped standalone), and point
+# the LICENSE/PRIVACY links at the copies now sitting alongside it instead
+# of the source tree's "../".
 awk '/^## Chrome version$/{skip=1} /^## Setup$/{skip=0} !skip' \
-  firefox-extension/README.md > "$FF_STAGE"/README.md
+  firefox-extension/README.md \
+  | sed -e 's#(\.\./PRIVACY\.md)#(PRIVACY.md)#' -e 's#(\.\./LICENSE)#(LICENSE)#' \
+  > "$FF_STAGE"/README.md
 
 (cd "$FF_STAGE" && zip -rq "$OLDPWD/$OUT/ms-totp-autofill-firefox.zip" .)
 

@@ -32,6 +32,7 @@ cp "$OVERLAY"/manifest.json "$OUT"/manifest.json
 cp "$OVERLAY"/background.js "$OUT"/background.js
 cp "$OVERLAY"/browser-polyfill.js "$OUT"/browser-polyfill.js
 cp "$OVERLAY"/user-readme-template.md "$OUT"/README.md
+cp LICENSE PRIVACY.md "$OUT"/
 
 # popup.html and options.html call browser.runtime.* directly; give them the
 # shim before their own script runs.

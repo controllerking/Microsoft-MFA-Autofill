@@ -26,6 +26,9 @@ extension's options page — i.e. the same kind of secret you'd otherwise put
 into an authenticator app. It does not intercept, phish, or bypass anyone
 else's MFA.
 
+Not affiliated with, endorsed by, or associated with Microsoft Corporation.
+See [PRIVACY.md](../PRIVACY.md) and [LICENSE](../LICENSE) (MIT).
+
 ## Install (temporary / development)
 
 1. Open `about:debugging#/runtime/this-firefox` in Firefox.
