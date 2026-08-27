@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MS TOTP Autofill</title>
+    <style>
+      body {
+        font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+        width: 280px;
+        margin: 0;
+        padding: 0.75rem;
+      }
+      h1 { font-size: 0.95rem; margin: 0 0 0.5rem; }
+      select, input[type="password"] { width: 100%; margin-bottom: 0.5rem; box-sizing: border-box; padding: 0.3rem; }
+      .code {
+        font-size: 1.6rem;
+        letter-spacing: 0.15em;
+        text-align: center;
+        padding: 0.5rem;
+        background: #f2f2f5;
+        border-radius: 6px;
+        margin-bottom: 0.4rem;
+      }
+      .muted { color: #666; font-size: 0.8rem; text-align: center; }
+      .error { color: #b00020; font-size: 0.8rem; }
+      a { color: #0067c0; text-decoration: none; font-size: 0.85rem; }
+      button { width: 100%; padding: 0.4rem; cursor: pointer; margin-bottom: 0.3rem; }
+      .hidden { display: none; }
+      .row { display: flex; gap: 0.4rem; }
+      .row button { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <h1>Microsoft MFA TOTP Autofill</h1>
+
+    <div id="noVaultSection" class="hidden">
+      <p class="muted">No vault set up yet.</p>
+    </div>
+
+    <div id="lockedSection" class="hidden">
+      <input type="password" id="unlockPassphrase" placeholder="Passphrase" autocomplete="current-password" />
+      <button id="unlockBtn">Unlock</button>
+      <div id="unlockError" class="error"></div>
+    </div>
+
+    <div id="unlockedSection" class="hidden">
+      <select id="accountSelect"></select>
+      <div class="code" id="code">------</div>
+      <div class="muted" id="countdown"></div>
+      <button id="lockBtn">Lock now</button>
+    </div>
+
+    <p><a id="openOptions" href="#">Manage accounts &amp; settings</a></p>
+    <script src="popup.js"></script>
+  </body>
+</html>
