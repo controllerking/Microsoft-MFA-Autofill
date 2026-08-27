@@ -350,9 +350,27 @@ function isAutofilled(el) {
 
 function clickPasswordSubmit(settings, pwEl) {
   const form = pwEl.closest("form");
-  const btn =
-    (form && form.querySelector(settings.passwordSubmitSelectors.join(","))) ||
-    firstMatch(settings.passwordSubmitSelectors);
+  // Do not pass the complete selector list to querySelector(). It returns the
+  // first matching element in *document order*, not the first selector in
+  // the list. On Microsoft's password screen that can be the Back control,
+  // even though #idSIButton9 (Sign in) is listed first in the settings.
+  // Prefer Microsoft's known primary button explicitly.
+  let btn = (form && form.querySelector("#idSIButton9")) || firstMatch(["#idSIButton9"]);
+
+  // Some Microsoft variants do not use idSIButton9. In those, accept only a
+  // visible submit control whose displayed/accessibility text says Next or
+  // Sign in; never choose an arbitrary submit control such as Back.
+  if (!btn) {
+    const scope = form || document;
+    const candidates = scope.querySelectorAll("input[type='submit'], button[type='submit']");
+    btn = Array.from(candidates).find((candidate) => {
+      if (!isVisible(candidate)) return false;
+      const label = normalizeText(
+        candidate.value || candidate.getAttribute("aria-label") || candidate.textContent
+      ).toLowerCase();
+      return label === "next" || label === "sign in";
+    });
+  }
   if (btn) {
     pwEl.dataset.msTotpPwHandled = "1";
     log("Auto-submitting password step");
@@ -473,6 +491,7 @@ async function tryFillOtc(settings) {
 async function tick() {
   const settings = await loadSettings();
   watchEmailField(settings);
+  const passwordField = firstMatch(settings.passwordSelectors);
 
   // Once the one-time-code field is actually on screen, we've arrived where
   // we wanted to be. The code-entry screen commonly has its own "Sign in
@@ -482,7 +501,10 @@ async function tick() {
   // verification code" option, land back here, see the same link again,
   // and loop forever. So the alternate-verification click is only ever
   // relevant *before* the code field shows up, never after.
-  if (!firstMatch(settings.otcSelectors)) {
+  // The password page itself includes a "Sign in another way" link. That is
+  // an escape hatch, not a verification prompt, so clicking it here takes the
+  // user away from the password screen before #idSIButton9 can be submitted.
+  if (!firstMatch(settings.otcSelectors) && !passwordField) {
     tryClickAlternateVerification(settings);
   }
 
